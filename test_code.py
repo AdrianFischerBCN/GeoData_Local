@@ -1,8 +1,16 @@
 
+
 import json
 import numpy as np
 import json
 import openpyxl
+
+import json
+
+import openpyxl
+import numpy as np
+import json
+
 import os
 
 from DataAnalytics.Class_DataSeries import DataSeries
@@ -19,6 +27,7 @@ df_res = pd.read_excel("DataBase/ResClus.xlsx", engine="openpyxl")
 df_res.sort_values(by="CS_DP", ascending=False, inplace=True)
 df_tabla = df_res.loc[:, ["Punto", "CS_DP"]]
 df_tabla["id"] = df_tabla.index #añadir columna de id
+
 df_tabla = df_tabla.round({"CS_DP": 4})
 
 #esta función permite añadir un color de fondo a una columna
@@ -110,6 +119,7 @@ app.layout = html.Div(
     Output(component_id="testlabel", component_property="children"),
     Input(component_id="DT_DobleProc_Top", component_property="active_cell")
 )
+
 def update_prueba(active_cell):
     if active_cell is None:
         # si no ha sido seleccionada ninguna celda devolver la primera fila
