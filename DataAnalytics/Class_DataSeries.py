@@ -347,7 +347,7 @@ class DataSeries:
             if np.min(self.pvals) < dict_CritScore["cs_InterWidth_minP"]:
                 aux_filamin = np.min(self.pvals, axis=1)
                 posmin = np.argmin(aux_filamin)
-                self.crit_score_logs[0] = self.feature_names[posmin] + "{:2e}".format(np.min(self.pvals))
+                self.crit_score_logs[0] = self.feature_names[posmin] + " " + "{:2e}".format(np.min(self.pvals))
 
             else:
                 self.crit_score_logs[0] = "No identificado"
