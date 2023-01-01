@@ -1,8 +1,8 @@
-import json
 
-import openpyxl
+import json
 import numpy as np
 import json
+import openpyxl
 import os
 
 from DataAnalytics.Class_DataSeries import DataSeries
@@ -18,6 +18,7 @@ import pandas as pd
 df_res = pd.read_excel("DataBase/ResClus.xlsx", engine="openpyxl")
 df_res.sort_values(by="CS_DP", ascending=False, inplace=True)
 df_tabla = df_res.loc[:, ["Punto", "CS_DP"]]
+df_tabla["id"] = df_tabla.index #añadir columna de id
 df_tabla = df_tabla.round({"CS_DP": 4})
 
 #esta función permite añadir un color de fondo a una columna
@@ -66,7 +67,7 @@ dict_data = df_tabla.to_dict("records")
 # convertir el diccionario en datable
 datatable = dash_table.DataTable(
     data=dict_data,
-    columns=[{"name": i, "id": i} for i in df_tabla.columns],
+    columns=[{"name": i, "id": i} for i in df_tabla.columns if i != "id"],
     id="DT_DobleProc_Top",
     page_size=16,  # max filas a mostrar
     row_selectable=False,  # para poder seleccionar la fila, en principio no hace falta
@@ -109,13 +110,13 @@ app.layout = html.Div(
     Output(component_id="testlabel", component_property="children"),
     Input(component_id="DT_DobleProc_Top", component_property="active_cell")
 )
-def update_prueba(selected_rows):
-    if selected_rows is None:
+def update_prueba(active_cell):
+    if active_cell is None:
         # si no ha sido seleccionada ninguna celda devolver la primera fila
         return str(df_tabla.iloc[0, 0])
     else:
         # devolver siempre la primera columna, que es la que tiene el nombre del punto
-        return str(df_tabla.iloc[selected_rows["row"], 0])
+        return str(df_tabla.loc[active_cell["row_id"], df_tabla.columns[0]])
 
 
 if __name__ == '__main__':
