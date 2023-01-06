@@ -18,6 +18,11 @@ from DataAnalytics.Parametros import dict_CritScore
 from Overlord import dictRouter
 from Overlord import dictParametros
 
+import plotly.graph_objects as go
+
+#esta función permite añadir un color de fondo a una columna
+from PageComponents.Dash_components_functions import data_bars
+
 # cargar librerías y datos
 from dash import Dash, dash_table, html, dcc, callback, Input, Output
 import dash_bootstrap_components as dbc
@@ -30,50 +35,16 @@ df_tabla["id"] = df_tabla.index #añadir columna de id
 
 df_tabla = df_tabla.round({"CS_DP": 4})
 
-#esta función permite añadir un color de fondo a una columna
-def data_bars(df, column):
-    n_bins = 100
-    bounds = [i * (1.0 / n_bins) for i in range(n_bins + 1)]
-    ranges = [
-        ((df[column].max() - df[column].min()) * i) + df[column].min()
-        for i in bounds
-    ]
-    styles = []
-    for i in range(1, len(bounds)):
-        min_bound = ranges[i - 1]
-        max_bound = ranges[i]
-        max_bound_percentage = bounds[i] * 100
-        styles.append({
-            'if': {
-                'filter_query': (
-                        '{{{column}}} >= {min_bound}' +
-                        (' && {{{column}}} < {max_bound}' if (i < len(bounds) - 1) else '')
-                ).format(column=column, min_bound=min_bound, max_bound=max_bound),
-                'column_id': column
-            },
-            'background': (
-                """
-                    linear-gradient(90deg,
-                    #dde2eb 0%,
-                    #dde2eb {max_bound_percentage}%,
-                    white {max_bound_percentage}%,
-                    white 100%)
-                """.format(max_bound_percentage=max_bound_percentage)
-            ),
-            'paddingBottom': 2,
-            'paddingTop': 2
-        })
 
-    return styles
 
 # inicializar app
 app = Dash(__name__,
            external_stylesheets=[dbc.themes.SLATE])
 
-# convertir en diccinario
+# convertir los resultados del Crit_Score de los dobles procesos en diccinario
 dict_data = df_tabla.to_dict("records")
 
-# convertir el diccionario en datable
+# generar el DataTable del CS de dobles procesos
 datatable = dash_table.DataTable(
     data=dict_data,
     columns=[{"name": i, "id": i} for i in df_tabla.columns if i != "id"],
@@ -84,6 +55,40 @@ datatable = dash_table.DataTable(
             data_bars(df_tabla, 'CS_DP')
     )
 )
+
+# generar una card con información de los puntos que están por encima de 0
+mask_CS_DP = df_tabla.CS_DP>0
+nr_CS_DP = len(df_tabla.loc[mask_CS_DP])
+card_CS_DP = dbc.Card(
+    children=[
+        html.H5('Dobles Procesos'),
+        html.P(nr_CS_DP, style={'color': 'white', 'fontSize': 70, 'font-weight': 'bold'}),
+        html.P("Total de dobles procesos significativos encontrados")],
+    body=True,
+    style={'textAlign': 'center', 'color': 'white'},
+    color='DimGrey'
+)
+
+# generar un histograma con el CritScore
+data = go.Histogram(x=df_tabla.CS_DP, cumulative_enabled=True)
+fig_layout = go.Layout(
+    title={
+        "text": "Histograma CS",
+        'x': 0.5,
+        'xanchor': 'center',
+        "font": {"color": "white"}},
+    margin=dict(l=0, r=0, t=40, b=0),
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+    height=250,
+    xaxis={
+        "showgrid": False},
+    yaxis={
+        "showgrid": False},
+)
+CS_DP_histogram = dcc.Graph(figure=go.Figure(data=data, layout=fig_layout))
+
+
 
 # layout y visualizar
 app.layout = html.Div(
@@ -98,7 +103,10 @@ app.layout = html.Div(
                     width=3
                 ),
                 dbc.Col(
-                    children="",
+                    children=html.Div([
+                        card_CS_DP,
+                        html.Br(),
+                        CS_DP_histogram]),
                     width=2
                 ),
                 dbc.Col(
